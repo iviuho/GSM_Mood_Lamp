@@ -28,17 +28,27 @@ def get_weather_info(key: str) -> dict:
     dict
         기상청 API로부터 받아온 데이터
     """
-    base_url = "http://newsky2.kma.go.kr/service/SecndSrtpdFrcstInfoService2/ForecastSpaceData"
+    base_url = "http://newsky2.kma.go.kr/service/SecndSrtpdFrcstInfoService2/ForecastSpaceData?"
     today = datetime.datetime.today()
-    target = get_time(today).strftime("%H%M")
+    
+    url_args = {
+        "ServiceKey" : key,
+        "base_date" : today.strftime("%Y%m%d"),
+        "base_time" : get_time(today).strftime("%H%M"),
+        "nx" : "57",
+        "ny" : "74",
+        "_type" : "json"
+    }
+
+    for k, v in url_args.items():
+        base_url += (k + "=" + v + "&")
 
     try:
-        return json.loads(requests.get("%s?ServiceKey=%s&base_date=%s&base_time=%s&nx=57&ny=74&_type=json" % (base_url, key, today.strftime("%Y%m%d"), target)).text)
-    except Exception as e:
-        print(e)
-        return ""
+        return json.loads(requests.get(base_url).text)
+    except:
+        return dict()
 
-def save_json(data):
+def save_json(data: dict) -> bool:
     """딕셔너리 데이터를 파일로 저장한다.
 
     매개 변수
