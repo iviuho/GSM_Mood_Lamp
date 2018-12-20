@@ -32,15 +32,14 @@ def pty_str(pty):
     else
         return 'Snowy' # 눈
 
+if __name__ == "__main__":
+    lcd = Adafruit_CharLCD(rs = 22, en = 11, d4 = 23, d5 = 10, d6 = 9, d7 = 25, cols = 16, lines = 2)
 
-lcd = Adafruit_CharLCD(rs = 22, en = 11, d4 = 23, d5 = 10, d6 = 9, d7 = 25, cols = 16, lines = 2)
+    # sky : 날씨상태, pty : 강수상태
+    sky, pty = get_result_code('SKY'), get_result_code('PTY')
 
-# sky : 날씨상태, pty : 강수상태
-sky, pty = get_result_code('SKY'), get_result_code('PTY')
+    sky = sky_str(sky)
+    pty = pty_str(pty)
 
-sky = sky_str(sky)
-pty = pty_str(pty)
-
-lcd.message('Weather : ' + sky + '\n') # 날씨상태
-lcd.message('PPTN type : ' + pty) # 강수형태
-# lcd.set_cursor(1, 1)
+    lcd.message('Weather : ' + sky + '\n') # 날씨상태
+    lcd.message('PPTN type : ' + pty) # 강수형태
