@@ -1,12 +1,13 @@
 # 라즈베리에서 실행
 
 import gsm_weather
-import Adafruit_CharLCD
-import RPI.GPIO as GPIO
+# import Adafruit_CharLCD
+# import RPI.GPIO as GPIO
 
 # 날씨정보에서 카테고리에 관한 결과 코드 전달
-def get_result_code(ctgory : str) -> str:
-    weather_dict = get_weather_info(key)["response"]["body"]["items"]["item"]
+def get_result_code(ctgory : str) -> float:
+    key = "Bo6Lak%2BejKb2tdv6MzSBk3GSG8DD5CFO6Fkcsiq%2BQFtK5%2BaSETARXl%2F7mBCpaWCN98MNTPh4DoZDeV1plXWc9A%3D%3D"
+    weather_dict = gsm_weather.get_weather_info(key)["response"]["body"]["items"]["item"]
     
     for i in weather_dict:
         if i["category"] == ctgory:
@@ -36,7 +37,7 @@ def inform_sky_pty(sky, pty):
 
 # 이 파일을 직접 실행해야 작동되는 부분
 if __name__ == "__main__":
-    lcd = Adafruit_CharLCD(rs = 22, en = 11, d4 = 23, d5 = 10, d6 = 9, d7 = 25, cols = 16, lines = 2)
+    # lcd = Adafruit_CharLCD(rs = 22, en = 11, d4 = 23, d5 = 10, d6 = 9, d7 = 25, cols = 16, lines = 2)
 
     # sky : 하늘상태, pty : 강수형태
     sky, pty = get_result_code("SKY"), get_result_code("PTY")
@@ -44,5 +45,7 @@ if __name__ == "__main__":
 
     weather_status = inform_sky_pty(sky, pty)
 
-    lcd.message("Weather : " + weather_status + "\n") # 날씨 상태
-    lcd.message("Temperature : " + t3h) # 기온
+    # print(sky, pty, t3h, weather_status)
+
+    # lcd.message("Weather : " + weather_status + "\n") # 날씨 상태
+    # lcd.message("Temperature : " + t3h) # 기온
