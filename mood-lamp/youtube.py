@@ -1,5 +1,6 @@
 import youtube_dl
 import threading
+import pafy
 
 class Waiting_Item:
     def __init__(self, url):
@@ -40,6 +41,19 @@ class Waiting_Item:
         except:
             return False
 
+    def check_length(self, url) -> int:
+        video = pafy.new(url)
+
+        # video.duration : 영상 길이가 00:05:47 형식으로 나온다.
+        dur = video.duration.split(':')
+        dur = [int(i) for i in dur]
+        # dur = map(int, dur)
+
+        for i in range(2):
+            dur[i + 1] += dur[i] * 60 
+            dur[i] = 0
+        return dur[2] # 영상의 초를 반환한다.
+
 class Download_Queue(list):
     def enqueue(self, item: Waiting_Item):
         self.append(item)
@@ -62,6 +76,8 @@ class Download_Queue(list):
             else:
                 print("%s 다운로드에 실패했습니다." % item.name)
             # 물품 도착 후 세부 구현 예정
+
+    
 
 def find_video(keyword: str) -> str:
     """유튜브에서 찾고 싶은 키워드를 입력받고, 그 동영상의 URL를 돌려줍니다.
