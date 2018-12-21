@@ -26,7 +26,7 @@ def get_weather_info(key: str) -> dict:
     리턴
     -------
     dict
-        기상청 API로부터 받아온 데이터
+        기상청 API로부터 받아온 코드값 : 값 으로 구성 되어있음
     """
     base_url = "http://newsky2.kma.go.kr/service/SecndSrtpdFrcstInfoService2/ForecastSpaceData?"
     today = datetime.datetime.today()
@@ -44,7 +44,8 @@ def get_weather_info(key: str) -> dict:
         base_url += (k + "=" + v + "&")
 
     try:
-        return json.loads(requests.get(base_url).text)
+        result = json.loads(requests.get(base_url).text)["response"]["body"]["items"]["item"]
+        return {i["category"] : i["fcstValue"] for i in result}
     except:
         return dict()
 
