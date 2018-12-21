@@ -15,13 +15,16 @@ def get_time(time):
         temp = "{:04d}".format(int(std[-1]) - 20)
         return time.replace(hour = int(temp[:2]), minute = int(temp[2:])) - datetime.timedelta(days = 1)
 
-def get_weather_info(key: str) -> dict:
+def get_weather_info(key: str, base_time: datetime.datetime = None) -> dict:
     """기상청 API로부터 날씨 정보를 받아온다.
+    현재 시각의 날씨가 아닌 3시간 이내의 날씨 정보이다.
 
     매개 변수
     ----------
     key: str
         기상청 API 인증키
+    base_time: datetime.datetime
+        날씨 조회를 원하는 datetime 객체
     
     리턴
     -------
@@ -29,7 +32,10 @@ def get_weather_info(key: str) -> dict:
         기상청 API로부터 받아온 코드값 : 값 으로 구성 되어있음
     """
     base_url = "http://newsky2.kma.go.kr/service/SecndSrtpdFrcstInfoService2/ForecastSpaceData?"
-    today = datetime.datetime.today()
+    if base_time:
+        today = base_time
+    else:
+        today = datetime.datetime.today()
     
     url_args = {
         "ServiceKey" : key,
@@ -45,7 +51,9 @@ def get_weather_info(key: str) -> dict:
 
     try:
         result = json.loads(requests.get(base_url).text)["response"]["body"]["items"]["item"]
-        return {i["category"] : i["fcstValue"] for i in result}
+        ret = {i["category"] : i["fcstValue"] for i in result}
+        ret["fcstTime"] = result[0]["fcstTime"]
+        return ret
     except:
         return dict()
 
