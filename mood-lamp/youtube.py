@@ -1,11 +1,13 @@
 import youtube_dl
 import threading
 import pafy
+import time
 
 class Waiting_Item:
     def __init__(self, url):
         self.url = url
         self.name = None
+        self.length = pafy.new(url).length
         self.options = {
             "format" : "bestaudio/best",
             "extractaudio" : True,
@@ -46,8 +48,7 @@ class Waiting_Item:
 
         # video.duration : 영상 길이가 00:05:47 형식으로 나온다.
         dur = video.duration.split(':')
-        dur = [int(i) for i in dur]
-        # dur = map(int, dur)
+        dur = [int(i) for i in dur] # dur = map(int, dur)
 
         for i in range(2):
             dur[i + 1] += dur[i] * 60 
@@ -77,7 +78,15 @@ class Download_Queue(list):
                 print("%s 다운로드에 실패했습니다." % item.name)
             # 물품 도착 후 세부 구현 예정
 
-    
+    def play_end(self): # 큐에 있는곡 전부다 없어질 때까지 반복
+        while not self.is_empty():
+            item = self.dequeue()
+            if item.download():
+                print("%s 재생을 시작합니다." % item.name)
+                # time.sleep(item.length)
+            else:
+                print("%s 다운로드에 실패했습니다." % item.name)
+        print("대기열에 재생할 곡이 더이상 없습니다.")
 
 def find_video(keyword: str) -> str:
     """유튜브에서 찾고 싶은 키워드를 입력받고, 그 동영상의 URL를 돌려줍니다.
@@ -108,5 +117,34 @@ def find_video(keyword: str) -> str:
     with youtube_dl.YoutubeDL(options) as ytdl:
         return ytdl.extract_info("ytsearch1:%s" % keyword, download = False)["entries"][0]["webpage_url"]
 
+def get_item(keywd : str):
+    url = find_video(keywd)
+    item = Waiting_Item(url)
+    return item
+
+
+def music_play(queue : object):
+    queue.play_end()
+
 if __name__ == "__main__":
-    pass
+    queue = Download_Queue()
+
+    # button.wait_for_press() # 버튼을 누를때까지 기다림(라즈베리에서 실행)
+    
+    keywd = "삐삐" # 음성인식한 키워드
+    queue.enqueue(get_item(keywd))
+    
+    try:    
+        t1 = threading.Thread(target = music_play, args = (queue, ))
+        t1.start()
+    except Exception as e:
+        print(e)
+
+    while queue.is_empty():
+        print("while문") 
+        if True: # 버튼을 누를시 
+            keywd = "야생화" # 음성인식한 키워드
+            queue.enqueue(get_item(keywd))
+        
+    print("종료")
+        
