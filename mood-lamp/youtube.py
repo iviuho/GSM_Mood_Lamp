@@ -4,10 +4,12 @@ import pafy
 import time
 
 class Waiting_Item:
-    def __init__(self, url):
+    def __init__(self, url: str):
         self.url = url
-        self.name = None
-        self.length = pafy.new(url).length
+        self.pafy = pafy.new(url)
+        self.name = self.pafy.title
+        self.length = self.pafy.length
+        self.downloaded = False
         self.options = {
             "format" : "bestaudio/best",
             "extractaudio" : True,
@@ -39,25 +41,15 @@ class Waiting_Item:
                 fileInfo = ytdl.extract_info(self.url, download = False)
                 ytdl.download([self.url])
             self.name = fileInfo["title"]
+            self.downloaded = True
             return True
         except:
             return False
 
-    def check_length(self, url) -> int:
-        video = pafy.new(url)
-
-        # video.duration : 영상 길이가 00:05:47 형식으로 나온다.
-        dur = video.duration.split(':')
-        dur = [int(i) for i in dur] # dur = map(int, dur)
-
-        for i in range(2):
-            dur[i + 1] += dur[i] * 60 
-            dur[i] = 0
-        return dur[2] # 영상의 초를 반환한다.
-
 class Download_Queue(list):
     def enqueue(self, item: Waiting_Item):
         self.append(item)
+        threading.Thread(target = item.download, daemon = True).start()
 
     def dequeue(self):
         return self.pop(0)
@@ -65,28 +57,43 @@ class Download_Queue(list):
     def is_empty(self):
         return not len(self) > 0
 
-    def play(self):
-        if self.is_empty():
-            print("대기열에 재생할 곡이 없습니다.")
-            return
-        else:
-            item = self.dequeue()
-            # 물품 도착 후 세부 구현 예정
-            if item.download():
-                print("%s 재생을 시작합니다." % item.name)
-            else:
-                print("%s 다운로드에 실패했습니다." % item.name)
-            # 물품 도착 후 세부 구현 예정
+class Player:
+    def __init__(self):
+        self.__playing = False
+        self.queue = Download_Queue()
 
-    def play_end(self): # 큐에 있는곡 전부다 없어질 때까지 반복
-        while not self.is_empty():
-            item = self.dequeue()
-            if item.download():
+    def play(self): # 표면적인 재생을 맡는 함수
+        if self.__playing:
+            print("이미 노래가 재생 중 입니다.")
+        else:
+            self.thread = threading.Thread(target = self.__play, daemon = True)
+            self.thread.start()
+
+    def __play(self): # 실질적인 재생을 맡는 함수
+        # 큐에 있는 곡 전부 다 없어질 때까지 반복
+        while not self.queue.is_empty():
+            item = self.queue.dequeue()
+            if item.downloaded:
                 print("%s 재생을 시작합니다." % item.name)
-                # time.sleep(item.length)
+                """
+                노래 재생
+                """
+                time.sleep(5) # item.length
             else:
-                print("%s 다운로드에 실패했습니다." % item.name)
-        print("대기열에 재생할 곡이 더 이상 없습니다.")
+                for i in range(5):
+                    print("%s 다운로드에 실패했습니다." % item.name)
+                    print("남은 재시도 횟수 : %s" % (5 - i))
+                    time.sleep(5)
+                    if item.downloaded:
+                        self.queue.insert(0, item)
+                        break
+                else:
+                    print("%s 노래를 건너뜁니다." % item.name)
+        print("대기열에 재생할 곡이 더 이상 없습니다.")   
+        self.__playing = False
+
+    def add(self, keyword: str):
+        self.queue.enqueue(get_item(keyword))
 
 def find_video(keyword: str) -> str:
     """유튜브에서 찾고 싶은 키워드를 입력받고, 그 동영상의 URL를 돌려줍니다.
@@ -117,12 +124,17 @@ def find_video(keyword: str) -> str:
     with youtube_dl.YoutubeDL(options) as ytdl:
         return ytdl.extract_info("ytsearch1:%s" % keyword, download = False)["entries"][0]["webpage_url"]
 
-def get_item(keywd: str):
-    url = find_video(keywd)
-    item = Waiting_Item(url)
-    return item
+def get_item(keyword: str) -> Waiting_Item:
+    return Waiting_Item(find_video(keyword))
 
 if __name__ == "__main__":
+    player = Player()
+    player.add("RISE")
+    player.add("Thunder")
+    player.add("앙 기모띠")
+    player.play()
+    player.thread.join()
+    """
     queue = Download_Queue()
 
     # button.wait_for_press() # 버튼을 누를때까지 기다림(라즈베리에서 실행)
@@ -142,3 +154,4 @@ if __name__ == "__main__":
             keywd = "야생화" # 음성인식한 키워드
             queue.enqueue(get_item(keywd))
     print("종료")
+    """
