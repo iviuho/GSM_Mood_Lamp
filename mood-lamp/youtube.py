@@ -86,7 +86,7 @@ class Download_Queue(list):
                 # time.sleep(item.length)
             else:
                 print("%s 다운로드에 실패했습니다." % item.name)
-        print("대기열에 재생할 곡이 더이상 없습니다.")
+        print("대기열에 재생할 곡이 더 이상 없습니다.")
 
 def find_video(keyword: str) -> str:
     """유튜브에서 찾고 싶은 키워드를 입력받고, 그 동영상의 URL를 돌려줍니다.
@@ -117,14 +117,10 @@ def find_video(keyword: str) -> str:
     with youtube_dl.YoutubeDL(options) as ytdl:
         return ytdl.extract_info("ytsearch1:%s" % keyword, download = False)["entries"][0]["webpage_url"]
 
-def get_item(keywd : str):
+def get_item(keywd: str):
     url = find_video(keywd)
     item = Waiting_Item(url)
     return item
-
-
-def music_play(queue : object):
-    queue.play_end()
 
 if __name__ == "__main__":
     queue = Download_Queue()
@@ -134,8 +130,8 @@ if __name__ == "__main__":
     keywd = "삐삐" # 음성인식한 키워드
     queue.enqueue(get_item(keywd))
     
-    try:    
-        t1 = threading.Thread(target = music_play, args = (queue, ))
+    try:
+        t1 = threading.Thread(target = (lambda queue: queue.play_end()), args = (queue, ))
         t1.start()
     except Exception as e:
         print(e)
@@ -145,6 +141,4 @@ if __name__ == "__main__":
         if True: # 버튼을 누를시 
             keywd = "야생화" # 음성인식한 키워드
             queue.enqueue(get_item(keywd))
-        
     print("종료")
-        
