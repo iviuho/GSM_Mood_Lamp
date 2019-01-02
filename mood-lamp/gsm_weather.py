@@ -1,6 +1,7 @@
-import requests
-import json
 import datetime
+import json
+
+import requests
 
 def get_time(time):
     std = ["{:04d}".format(i) for i in range(220, 2321, 300)] # len(std) : 8

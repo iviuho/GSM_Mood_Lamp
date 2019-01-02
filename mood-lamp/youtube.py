@@ -1,7 +1,8 @@
-import youtube_dl
 import threading
-import pafy
 import time
+
+import pafy
+import youtube_dl
 
 class Waiting_Item:
     def __init__(self, url: str):
@@ -9,24 +10,8 @@ class Waiting_Item:
         self.pafy = pafy.new(url)
         self.name = self.pafy.title
         self.length = self.pafy.length
+        self.file = None
         self.downloaded = False
-        self.options = {
-            "format" : "bestaudio/best",
-            "extractaudio" : True,
-            "audioformat" : "mp3",
-            "outtmpl" : "%(title)s.%(ext)s",
-            "noplaylist" : True,
-            "nocheckcertificate" : True,
-            "ignoreerrors" : False,
-            "logtostderr" : False,
-            "quiet" : True,
-            "no_warnings" : True,
-            "postprocessors" : [{
-                "key" : "FFmpegExtractAudio",
-                "preferredcodec" : "mp3",
-                "preferredquality" : "192",
-            }]
-        }
 
     def download(self) -> bool:
         """유튜브에서 영상을 다운로드 후, MP3 파일을 추출한다.
@@ -36,11 +21,15 @@ class Waiting_Item:
         bool
             MP3 파일 저장에 성공했다면 True, 실패했다면 False
         """
+        import wget
+        
         try:
-            with youtube_dl.YoutubeDL(self.options) as ytdl:
-                fileInfo = ytdl.extract_info(self.url, download = False)
-                ytdl.download([self.url])
-            self.name = fileInfo["title"]
+            stream = self.pafy.getbestaudio()
+            self.file = wget.download(stream.url, "%s.mp3" % self.name)
+            self.downloaded = True
+            return True
+        except WindowsError:
+            self.file = wget.download(stream.url, "%s.mp3" % self.name)
             self.downloaded = True
             return True
         except:
@@ -108,6 +97,8 @@ def find_video(keyword: str) -> str:
     str
         검색 완료된 영상의 URL
     """
+    import youtube_dl
+    
     options = {
         "format" : "bestaudio/best",
         "extractaudio" : True,
@@ -127,13 +118,7 @@ def find_video(keyword: str) -> str:
 def get_item(keyword: str) -> Waiting_Item:
     return Waiting_Item(find_video(keyword))
 
-if __name__ == "__main__":
-    player = Player()
-    player.add("RISE")
-    player.add("Thunder")
-    player.add("앙 기모띠")
-    player.play()
-    player.thread.join()
+if __name__ == "__main__"
     """
     queue = Download_Queue()
 
