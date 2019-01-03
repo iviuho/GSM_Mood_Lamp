@@ -121,25 +121,10 @@ def find_video(keyword: str) -> str:
 def get_item(keyword: str) -> Waiting_Item:
     return Waiting_Item(find_video(keyword))
 
-if __name__ == "__main__"
+if __name__ == "__main__":
     """
-    queue = Download_Queue()
-
-    # button.wait_for_press() # 버튼을 누를때까지 기다림(라즈베리에서 실행)
-    
-    keywd = "삐삐" # 음성인식한 키워드
-    queue.enqueue(get_item(keywd))
-    
-    try:
-        t1 = threading.Thread(target = (lambda queue: queue.play_end()), args = (queue, ))
-        t1.start()
-    except Exception as e:
-        print(e)
-
-    while queue.is_empty():
-        print("while문") 
-        if True: # 버튼을 누를시 
-            keywd = "야생화" # 음성인식한 키워드
-            queue.enqueue(get_item(keywd))
-    print("종료")
+    player = Player()
+    player.add("something")
+    player.play()
+    player.thread.join()
     """
