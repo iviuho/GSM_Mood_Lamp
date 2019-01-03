@@ -3,6 +3,7 @@ import time
 
 import pafy
 import youtube_dl
+import vlc
 
 class Waiting_Item:
     def __init__(self, url: str):
@@ -64,10 +65,11 @@ class Player:
             item = self.queue.dequeue()
             if item.downloaded:
                 print("%s 재생을 시작합니다." % item.name)
-                """
-                노래 재생
-                """
-                time.sleep(5) # item.length
+                player = vlc.MediaPlayer("%s.mp3" % item.file)
+                if player.play():
+                    print("에러 발생!")
+                time.sleep(item.length)
+                player.release()
             else:
                 for i in range(5):
                     print("%s 다운로드에 실패했습니다." % item.name)
@@ -77,6 +79,7 @@ class Player:
                         self.queue.insert(0, item)
                         break
                 else:
+                    self.queue.append(item)
                     print("%s 노래를 건너뜁니다." % item.name)
         print("대기열에 재생할 곡이 더 이상 없습니다.")   
         self.__playing = False
