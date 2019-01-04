@@ -26,15 +26,31 @@ class Waiting_Item:
         
         try:
             stream = self.pafy.getbestaudio()
-            self.file = wget.download(stream.url, "%s.mp3" % self.name)
+            self.file = wget.download(stream.url, "%s.wav" % self.name)
             self.downloaded = True
-            return True
-        except WindowsError:
-            self.file = wget.download(stream.url, "%s.mp3" % self.name)
+        except FileNotFoundError:
+            self.file = wget.download(stream.url, "%s.wav" % self.replace_name())
             self.downloaded = True
-            return True
         except:
             return False
+        else:
+            return True
+
+    def replace_name(self) -> str:
+        """파일 이름 지정 규칙에 따라서 파일 이름을 수정한 후 리턴한다.
+
+        리턴
+        -------
+        str
+            파일 이름 규칙을 준수하는 문자열
+        """
+        import re
+
+        res = set(re.compile("[^[\w[\`\'\˜\=\+\#\ˆ\@\$\&\-\_\.\(\)\{\}\;\[\] ]").findall(self.name))
+        new_name = self.name
+        for i in res:
+            new_name = new_name.replace(i, "")
+        return new_name
 
 class Download_Queue(list):
     def enqueue(self, item: Waiting_Item):
@@ -51,6 +67,7 @@ class Player:
     def __init__(self):
         self.__playing = False
         self.queue = Download_Queue()
+        self.player = vlc.MediaPlayer()
 
     def play(self): # 표면적인 재생을 맡는 함수
         if self.__playing:
@@ -61,15 +78,17 @@ class Player:
 
     def __play(self): # 실질적인 재생을 맡는 함수
         # 큐에 있는 곡 전부 다 없어질 때까지 반복
+        import os
+        
         while not self.queue.is_empty():
             item = self.queue.dequeue()
             if item.downloaded:
                 print("%s 재생을 시작합니다." % item.name)
-                player = vlc.MediaPlayer("%s.mp3" % item.file)
-                if player.play():
-                    print("에러 발생!")
+                self.player.set_media(vlc.Media(item.file))
+                self.player.play()
                 time.sleep(item.length)
-                player.release()
+                self.player.stop()
+                os.remove(item.file)
             else:
                 for i in range(5):
                     print("%s 다운로드에 실패했습니다." % item.name)
@@ -125,6 +144,8 @@ if __name__ == "__main__":
     """
     player = Player()
     player.add("something")
+    player.add("something2")
     player.play()
+    
     player.thread.join()
     """
