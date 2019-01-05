@@ -54,7 +54,7 @@ def init() -> object:
 
     return lcd
 
-def set_message(weather: dict, lcd: Adafruit_CharLCD.Adafruit_CharLCD) -> bool:
+def set_message(weather: dict, lcd: object) -> bool:
     """라즈베리파이 LCD화면에 정보를 띄운다.
 
     매개 변수
@@ -62,7 +62,7 @@ def set_message(weather: dict, lcd: Adafruit_CharLCD.Adafruit_CharLCD) -> bool:
     weather: dict
         날씨 정보
 
-    lcd: Adafruit_CharLCD.Adafruit_CharLCD)
+    lcd: Adafruit_CharLCD.Adafruit_CharLCD
         LCD 객체
     """
     lcd.clear()
