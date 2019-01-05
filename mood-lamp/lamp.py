@@ -1,4 +1,5 @@
 import Adafruit_CharLCD as LCD
+import serial
 
 import gsm_weather
 
@@ -76,6 +77,34 @@ def set_message(weather: dict, lcd: object) -> bool:
     else:
         lcd.message("Can't get info!")
         return False
+
+# Weather Case
+# -> "Rainy", "Sleet", "Snowy", "Sunny!", "Sunny.", "Cloudy.", "Cloudy!"
+    
+def send_weather_status(msg: str):
+    """시리얼 통신을 통해 아두이노로 메시지를 보낸다.
+
+    매개 변수
+    ----------
+    msg: str
+        시리얼 통신으로 보낼 메시지
+
+    리턴
+    -------
+    int
+        시리얼 통신을 통해 보낸 문자열의 바이트 수
+    """
+    for i in range(4):
+        try:
+            arduino = serial.Serial("/dev/ttyACM%s" % i)
+            break
+        except serial.serialutil.SerialException:
+            pass
+        
+    if msg:
+        return arduino.write(msg.encode())
+    else:
+        return 0
 
 # 이 파일을 직접 실행해야 작동되는 부분
 if __name__ == "__main__":
