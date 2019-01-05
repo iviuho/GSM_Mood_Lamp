@@ -79,6 +79,6 @@ def set_message(weather: dict, lcd: Adafruit_CharLCD.Adafruit_CharLCD) -> bool:
 
 # 이 파일을 직접 실행해야 작동되는 부분
 if __name__ == "__main__":
-    key = "Bo6Lak%2BejKb2tdv6MzSBk3GSG8DD5CFO6Fkcsiq%2BQFtK5%2BaSETARXl%2F7mBCpaWCN98MNTPh4DoZDeV1plXWc9A%3D%3D"
+    key = ""
     lcd = init()
     set_message(gsm_weather.get_weather_info(key), lcd)
