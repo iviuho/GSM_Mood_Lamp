@@ -71,7 +71,8 @@ class Player:
 
     def play(self): # 표면적인 재생을 맡는 함수
         if self.__playing:
-            print("이미 노래가 재생 중 입니다.")
+            pass
+            # print("이미 노래가 재생 중 입니다.")
         else:
             self.thread = threading.Thread(target = self.__play, daemon = True)
             self.thread.start()

@@ -16,7 +16,7 @@ def search_music(music):
     리턴
     -------
     tuple
-        (노래 제목, 노래를 부른 가수)로 구성된 튜플, 검색 결과가 없다면 None을 반환한다.
+        (노래를 부른 가수, 노래 제목)로 구성된 튜플, 검색 결과가 없다면 None을 반환한다.
     """
     try:
         melon_html = get_html("https://www.melon.com/search/total/index.htm?q=%s&section=&linkOrText=T&ipath=srch_form" % music)
