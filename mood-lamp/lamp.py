@@ -1,5 +1,4 @@
 import Adafruit_CharLCD as LCD
-import serial
 
 import gsm_weather
 
@@ -94,6 +93,8 @@ def send_weather_status(msg: str):
     int
         시리얼 통신을 통해 보낸 문자열의 바이트 수
     """
+    import serial
+    
     for i in range(4):
         try:
             arduino = serial.Serial("/dev/ttyACM%s" % i)
