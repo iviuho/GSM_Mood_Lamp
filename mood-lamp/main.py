@@ -70,7 +70,17 @@ class MicrophoneStream(object):
 
             yield b"".join(data)
  
-def main(player, manager):
+def main(player: object, manager: object):
+    """전체 프로그램을 돌리기 위한 메인 함수.
+
+    매개 변수
+    ----------
+    player: object
+        youtube.Player 객체
+
+    manager: object
+        command.Command_Manager 객체
+    """
     language_code = "ko-KR"  # 한국어로 변경
 
     client = speech.SpeechClient()

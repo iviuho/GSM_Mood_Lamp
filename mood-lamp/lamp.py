@@ -70,8 +70,8 @@ def set_message(weather: dict, lcd: object) -> bool:
     if weather:
         status = get_weather_status(weather)
         
-        lcd.message("Weather : %s\n" % status)
-        lcd.message("Temperature : %s" % weather["T3H"])
+        lcd.message("Weather: %s\n" % status)
+        lcd.message("Temperature: %s" % weather["T3H"])
         return True
     else:
         lcd.message("Can't get info!")
