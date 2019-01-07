@@ -74,6 +74,7 @@ class Player:
             pass
             # print("이미 노래가 재생 중 입니다.")
         else:
+            self.__playing = True
             self.thread = threading.Thread(target = self.__play, daemon = True)
             self.thread.start()
 

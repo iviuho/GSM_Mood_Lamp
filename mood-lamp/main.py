@@ -1,29 +1,119 @@
+from __future__ import division
+
+import re
+import sys
+
+from google.cloud import speech
+from google.cloud.speech import enums
+from google.cloud.speech import types
+from google.api_core.exceptions import OutOfRange
+import pyaudio
+from six.moves import queue
 
 import gsm_weather
 import music_search
-# import lamp
-import speech
+import lamp
 
 from youtube import Player
 from command import Command_Manager
-# from Thread import threading
 
-def main():
-	manager = Command_Manager("command.txt")
-	player = Player()
+RATE = 16000
+CHUNK = int(RATE / 10)  # 100ms
 
-	# lamp.set_message(gsm_weather.get_weather_info(key), lcd)
+class MicrophoneStream(object):
+    def __init__(self, rate, chunk):
+        self._rate = rate
+        self._chunk = chunk
 
-	while True:
-		msg = speech.main()
+        self._buff = queue.Queue()
+        self.closed = True
 
-		if manager.is_command(msg):
-			tuple_data = music_search.serch_music(msg.split()[:-1])
-			player.add("%s - %s" % (tuple_data[0], tuple_data[1]))
-			player.play()
+    def __enter__(self):
+        self._audio_interface = pyaudio.PyAudio()
+        self._audio_stream = self._audio_interface.open(
+            format = pyaudio.paInt16,
+            channels = 1, rate = self._rate,
+            input = True, frames_per_buffer = self._chunk,
+            stream_callback = self._fill_buffer,
+        )
+        self.closed = False
 
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self._audio_stream.stop_stream()
+        self._audio_stream.close()
+        self.closed = True
+        self._buff.put(None)
+        self._audio_interface.terminate()
+
+    def _fill_buffer(self, in_data, frame_count, time_info, status_flags):
+        self._buff.put(in_data)
+        return None, pyaudio.paContinue
+
+    def generator(self):
+        while not self.closed:
+            chunk = self._buff.get()
+            if chunk is None:
+                return
+            data = [chunk]
+
+            while True:
+                try:
+                    chunk = self._buff.get(block = False)
+                    if chunk is None:
+                        return
+                    data.append(chunk)
+                except queue.Empty:
+                    break
+
+            yield "".join(data).encode()
+ 
+def main(player, manager):
+    language_code = "ko-KR"
+
+    client = speech.SpeechClient()
+    config = types.RecognitionConfig(
+        encoding = enums.RecognitionConfig.AudioEncoding.LINEAR16,
+        sample_rate_hertz = RATE,
+        language_code = language_code)
+    streaming_config = types.StreamingRecognitionConfig(
+        config = config,
+        interim_results = True)
+
+    with MicrophoneStream(RATE, CHUNK) as stream:
+        audio_generator = stream.generator()
+        requests = (types.StreamingRecognizeRequest(audio_content = content) for content in audio_generator)
+
+        responses = client.streaming_recognize(streaming_config, requests)
+
+        for i in responses:
+            if not i.results or not i.results.alternatives or not i.results[0].is_final:
+                continue
+
+            transcript = i.results[0].alternatives[0].transcript
+            print(transcript)
+
+            if not manager.is_command(transcript):
+                continue
+
+            melon_result = music_search.search_music("".join(transcript.split()[:-1]))
+            print(melon_result)
+
+            artist, title = melon_result
+            if not melon_result == (None, None):
+                player.add("%s - %s" % (artist, title))
+                player.play()
+        
 if __name__ == "__main__":
-	main()
-		
-		
-	
+    key = "pyoHDO8lB68iVD2hCcD32nZNaD%2FDpgW2bQUA%2FnQKpwfJVv%2BUncuibmJHIEX7lIoj%2BNd6VTZ7JKMQF%2FLM5%2FVX%2Bg%3D%3D"
+    player = Player()
+    manager = Command_Manager("command.txt")
+
+    while True:
+        try:
+            main(player, manager)
+        except KeyboardInterrupt:
+            break
+        except:
+            pass
