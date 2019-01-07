@@ -95,6 +95,7 @@ def send_weather_status(msg: str):
     """
     import serial
     
+    arduino = None
     for i in range(4):
         try:
             arduino = serial.Serial("/dev/ttyACM%s" % i)

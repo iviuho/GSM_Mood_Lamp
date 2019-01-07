@@ -2,6 +2,8 @@ from __future__ import division
 
 import re
 import sys
+import time
+import threading
 
 from google.cloud import speech
 from google.cloud.speech import enums
@@ -13,7 +15,6 @@ from six.moves import queue
 import gsm_weather
 import music_search
 import lamp
-
 from youtube import Player
 from command import Command_Manager
 
@@ -67,10 +68,10 @@ class MicrophoneStream(object):
                 except queue.Empty:
                     break
 
-            yield "".join(data).encode()
+            yield b"".join(data)
  
 def main(player, manager):
-    language_code = "ko-KR"
+    language_code = "ko-KR"  # 한국어로 변경
 
     client = speech.SpeechClient()
     config = types.RecognitionConfig(
@@ -88,7 +89,7 @@ def main(player, manager):
         responses = client.streaming_recognize(streaming_config, requests)
 
         for i in responses:
-            if not i.results or not i.results.alternatives or not i.results[0].is_final:
+            if not i.results or not i.results[0].alternatives or not i.results[0].is_final:
                 continue
 
             transcript = i.results[0].alternatives[0].transcript
@@ -104,16 +105,32 @@ def main(player, manager):
             if not melon_result == (None, None):
                 player.add("%s - %s" % (artist, title))
                 player.play()
+
+def run_lamp(key: str):
+    weather = gsm_weather.get_weather_info(key)
+
+    while True:
+        # LCD에 텍스트 표시
+        lcd = lamp.init()
+        lamp.set_message(weather, lcd)
+
+        # LED 색깔 바꾸기 위해 시리얼 통신
+        # lamp.send_weather_status(lamp.get_weather_status(weather))
+        time.sleep(10800) # 3시간 = 3 * 60 * 60초
         
 if __name__ == "__main__":
     key = "pyoHDO8lB68iVD2hCcD32nZNaD%2FDpgW2bQUA%2FnQKpwfJVv%2BUncuibmJHIEX7lIoj%2BNd6VTZ7JKMQF%2FLM5%2FVX%2Bg%3D%3D"
+
+    lamp_thread = threading.Thread(target = run_lamp, args = (key, ), daemon = True)
+    lamp_thread.start()
+
     player = Player()
     manager = Command_Manager("command.txt")
 
     while True:
         try:
             main(player, manager)
+        except OutOfRange:
+            pass
         except KeyboardInterrupt:
             break
-        except:
-            pass
