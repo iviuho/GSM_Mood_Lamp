@@ -108,18 +108,35 @@ def main(player: object, manager: object):
             if not manager.is_command(transcript):
                 continue
 
-            melon_result = music_search.search_music("".join(transcript.split()[:-1]))
-            print(melon_result)
+            command = manager.get_command(transcript)
 
-            artist, title = melon_result
-            if not melon_result == (None, None):
-                player.add("%s - %s" % (artist, title))
-                player.play()
+            if not command:
+                continue
+            elif command == "play":
+                melon_result = music_search.search_music("".join(transcript.split()[:-1]))
+                print(melon_result)
+
+                artist, title = melon_result
+                if not melon_result == (None, None):
+                    player.add("%s - %s" % (artist, title))
+                    player.play()
+            elif command == "pause":
+                player.pause()
+            elif command == "resume":
+                player.resume()
+            elif command == "skip":
+                player.skip()
+            else:
+                lamp.send_weather_status(command)
 
 def run_lamp(key: str):
     weather = gsm_weather.get_weather_info(key)
 
     while True:
+        msg = "Weather: %s" % lamp.get_weather_status(weather)
+        msg += "Temperature: %s" % weather["T3H"]
+        print(msg)
+
         # LCD에 텍스트 표시
         lcd = lamp.init()
         lamp.set_message(weather, lcd)

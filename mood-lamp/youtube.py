@@ -68,6 +68,7 @@ class Player:
         self.__playing = False
         self.queue = Download_Queue()
         self.player = vlc.MediaPlayer()
+        self.condition = threading.Condition()
 
     def play(self): # 표면적인 재생을 맡는 함수
         if self.__playing:
@@ -77,6 +78,29 @@ class Player:
             self.__playing = True
             self.thread = threading.Thread(target = self.__play, daemon = True)
             self.thread.start()
+
+    def pause(self):
+        if self.player.is_playing():
+            self.player.pause()
+            with self.condition as condition:
+                condition.notify_all()
+                condition.wait()
+        else:
+            return
+
+    def resume(self):
+        if self.player.is_playing():
+            return
+        else:
+            with self.condition as condition:
+                condition.notify_all()
+                self.player.play()
+                condition.wait(self.player.get_length() - self.player.get_time())
+
+    def skip(self):
+        self.player.stop()
+        with self.condition as condition:
+            condition.notify_all()
 
     def __play(self): # 실질적인 재생을 맡는 함수
         # 큐에 있는 곡 전부 다 없어질 때까지 반복
@@ -88,8 +112,7 @@ class Player:
                 print("%s 재생을 시작합니다." % item.name)
                 self.player.set_media(vlc.Media(item.file))
                 self.player.play()
-                time.sleep(item.length)
-                self.player.stop()
+                self.condition.wait(item.length)
                 os.remove(item.file)
             else:
                 for i in range(5):
